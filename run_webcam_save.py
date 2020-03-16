@@ -50,8 +50,12 @@ if __name__ == '__main__':
     ret_val, image = cam.read()
     logger.info('cam image=%dx%d' % (image.shape[1], image.shape[0]))
 
+    frame_width = int(cam.get(3))
+    frame_height = int(cam.get(4))
+    out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
+
     while True:
-        ret_val, image = cam.read()
+        ret_val, image  = cam.read()
 
         logger.debug('image process+')
         humans = e.inference(image, resize_to_default=(w > 0 and h > 0), upsample_size=args.resize_out_ratio)
@@ -64,10 +68,11 @@ if __name__ == '__main__':
                     "FPS: %f" % (1.0 / (time.time() - fps_time)),
                     (10, 10),  cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                     (0, 255, 0), 2)
-        cv2.imshow('tf-pose-estimation result', image)
+        #cv2.imshow('tf-pose-estimation result', image)
+        out.write(image)
         fps_time = time.time()
         if cv2.waitKey(1) == 27:
             break
         logger.debug('finished+')
-
+    out.release()
     cv2.destroyAllWindows()
