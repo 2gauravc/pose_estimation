@@ -69,6 +69,20 @@ if __name__ == '__main__':
         if ret_val==True: 
             logger.debug('image process+')
             humans = e.inference(image, resize_to_default=(w > 0 and h > 0), upsample_size=args.resize_out_ratio)
+            num_ppl = len(humans)
+            print("Num people: ", num_ppl)
+            h_c=1
+            for human in humans:
+                try:
+                    head_pt = human.body_parts[0]
+                    head_x = head_pt.x*image.shape[1]
+                    head_y = head_pt.y*image.shape[0]
+                    print("Frame #:", frame_num," Human #:", h_c)
+                    print("\t X:", head_x, " Y:", head_y)
+                except:
+                    pass
+                h_c+=1
+
             logger.debug('postprocess+')
             image = TfPoseEstimator.draw_humans(image, humans, imgcopy=False)
             logger.debug('show+')
@@ -81,7 +95,8 @@ if __name__ == '__main__':
             fps_time = time.time()
             print("processed frame: ", frame_num)
             frame_num+=1
-            if cv2.waitKey(1) == 27:
+            if frame_num > 50: #cv2.waitKey(1) == 27:
+                print("Exiting after 50 frames")
                 break
         else:
                 break
