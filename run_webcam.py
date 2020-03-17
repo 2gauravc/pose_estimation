@@ -4,7 +4,7 @@ import time
 
 import cv2
 import numpy as np
-
+import os 
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
 
@@ -37,6 +37,8 @@ if __name__ == '__main__':
     
     parser.add_argument('--tensorrt', type=str, default="False",
                         help='for tensorrt process.')
+    parser.add_argument('--save_video', type=bool,default=False, 
+                        help='To write output video. default name file_name_output.avi')
     args = parser.parse_args()
 
     logger.debug('initialization %s : %s' % (args.model, get_graph_path(args.model)))
@@ -50,6 +52,7 @@ if __name__ == '__main__':
     ret_val, image = cam.read()
     logger.info('cam image=%dx%d' % (image.shape[1], image.shape[0]))
 
+    frame=0
     while True:
         ret_val, image = cam.read()
 
@@ -60,13 +63,19 @@ if __name__ == '__main__':
         image = TfPoseEstimator.draw_humans(image, humans, imgcopy=False)
 
         logger.debug('show+')
+        no_people = len(humans)
+
         cv2.putText(image,
                     "FPS: %f" % (1.0 / (time.time() - fps_time)),
                     (10, 10),  cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                     (0, 255, 0), 2)
-        cv2.imshow('tf-pose-estimation result', image)
+        #cv2.imshow('tf-pose-estimation result', image)
         fps_time = time.time()
-        if cv2.waitKey(1) == 27:
+        if (frame==0) and (args.save_video):
+            out=cv2.VideoWriter('vid_output.avi', cv2.VideoWriter_fourcc('M', 'J','P','G'),20,
+                  (image.shape[1], image.shape[0]))
+        out.write(image)
+        if cv2.waitKey(1) & 0xFF == ord('q'): #cv2.waitKey(1) == 27 :
             break
         logger.debug('finished+')
 
