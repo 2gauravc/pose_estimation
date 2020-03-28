@@ -5,8 +5,11 @@ import time
 import cv2
 import numpy as np
 import ffmpy
+import pickle
 from tf_pose.estimator import TfPoseEstimator
 from tf_pose.networks import get_graph_path, model_wh
+from conn_test import conv_humans_to_recs
+from conn_test import insert_pose_keypoints_humans
 
 logger = logging.getLogger('TfPoseEstimator-WebCam')
 logger.setLevel(logging.DEBUG)
@@ -65,25 +68,13 @@ if __name__ == '__main__':
     frame_num=0
     while True:
         ret_val, image  = cam.read()
-        print("ret is: ", ret_val)
         if ret_val==True: 
             logger.debug('image process+')
             humans = e.inference(image, resize_to_default=(w > 0 and h > 0), upsample_size=args.resize_out_ratio)
-            num_ppl = len(humans)
-            print("Num people: ", num_ppl)
-            h_c=1
-            for human in humans:
-                try:
-                    head_pt = human.body_parts[0]
-                    head_x = head_pt.x*image.shape[1]
-                    head_y = head_pt.y*image.shape[0]
-                    print("Frame #:", frame_num," Human #:", h_c)
-                    print("\t X:", head_x, " Y:", head_y)
-                except:
-                    pass
-                h_c+=1
-
             logger.debug('postprocess+')
+            
+            insert_pose_keypoints_humans(humans,1,1)
+            logger.debug('db_write+')            
             image = TfPoseEstimator.draw_humans(image, humans, imgcopy=False)
             logger.debug('show+')
             cv2.putText(image,
